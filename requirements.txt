@@ -1,0 +1,4 @@
+torch==2.0.1
+SigProfilerExtractor==1.1.25
+pandas==1.2.4
+numpy<2
