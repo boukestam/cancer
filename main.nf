@@ -1,42 +1,20 @@
 nextflow.enable.dsl = 2
 
 workflow {
-  mutations_raw = fetch_tcga_data()
-
   mutations_pre = preprocess_mutations(
     Channel.fromPath("bin/preprocess_mutations.py"),
-    mutations_raw,
+    Channel.fromPath("data/final_consensus_passonly.snv_mnv_indel.icgc.controlled.maf")
+  )
+
+  matrix = generate_matrix(
+    Channel.fromPath("bin/generate_matrix.py"),
+    mutations_pre,
   )
 
   extract_signatures(
     Channel.fromPath("bin/extract_signatures.py"),
-    mutations_pre,
+    matrix
   )
-}
-
-process fetch_tcga_data {
-  cache true
-
-  output:
-  path "mutations.tsv"
-
-  script:
-  """
-  # Create a directory for data
-  mkdir -p data && cd data
-
-  # Download METABRIC dataset
-  wget -q https://cbioportal-datahub.s3.amazonaws.com/brca_metabric.tar.gz
-
-  # Extract the tar.gz file
-  tar -xzf brca_metabric.tar.gz
-
-  # Move the mutation data to the root of the data folder
-  mv brca_metabric/data_mutations.txt ../mutations.tsv
-
-  # Cleanup
-  rm -rf brca_metabric brca_metabric.tar.gz
-  """
 }
 
 process preprocess_mutations {
@@ -45,25 +23,39 @@ process preprocess_mutations {
   path mutations_raw
 
   output:
-  path "matrix_input"
+  path "matrix"
 
   script:
   """
-  mkdir -p \$PWD/matrix_input
-  python ${script} ${mutations_raw} matrix_input/preprocessed_mutations.maf
+  mkdir -p \$PWD/matrix
+  python ${script} ${mutations_raw} matrix/preprocessed_mutations.maf ${projectDir}/results
+  """
+}
+
+process generate_matrix {
+  input:
+  path script
+  path preprocessed_data
+
+  output:
+  path "matrix/output/SBS/test.SBS96.all"
+
+  script:
+  """
+  python ${script} ${preprocessed_data}
   """
 }
 
 process extract_signatures {
   input:
   path script
-  path preprocessed_data
+  path matrix
 
   output:
   path "signature_plots"
 
   script:
   """
-  python ${script} ${preprocessed_data} signature_plots
+  python ${script} ${matrix} signature_plots
   """
 }
