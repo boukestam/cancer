@@ -27,6 +27,7 @@ process preprocess_mutations {
 
   script:
   """
+  mkdir -p ${projectDir}/results
   mkdir -p \$PWD/matrix
   python ${script} ${mutations_raw} matrix/preprocessed_mutations.maf ${projectDir}/results
   """

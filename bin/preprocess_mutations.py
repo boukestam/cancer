@@ -65,9 +65,8 @@ plt.grid(axis="y", linestyle="--", alpha=0.7)
 plt.savefig(os.path.join(result_dir, "donors_by_cancer_counts.png"), dpi=300, bbox_inches="tight")
 plt.show()
 
-# Keep only skin melanoma
-#df = df[df["Project_Code"] == "Skin-Melanoma"]
-df = df[df["Project_Code"] == "Liver-HCC"]
+# Keep only one cancer type
+df = df[df["Project_Code"] == "Skin-Melanoma"]
 
 # Save preprocessed file
 df.to_csv(output_file, sep="\t", index=False)
