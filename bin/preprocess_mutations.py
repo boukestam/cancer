@@ -45,16 +45,27 @@ df.insert(1, "Entrez_Gene_Id", "")
 df.insert(2, "Center", "")
 df.insert(3, "NCBI_Build", "")
 
-# Remove synonymous mutations
-df = df[df['Variant_Classification'] != 'Silent']
+# Count and plot the variant types
+variant_counts = df["Variant_Type"].value_counts()
+plt.figure(figsize=(8, 5))
+variant_counts.plot(kind="bar")
+plt.xlabel("Variant Type")
+plt.ylabel("Count")
+plt.title("Mutation Counts by Type")
+plt.xticks(rotation=45)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.savefig(os.path.join(result_dir, "variant_counts.png"), dpi=300, bbox_inches="tight")
+plt.show()
+
+# Remove synonymous mutations and keep only Single Nucleotide Variants
+df = df[(df['Variant_Classification'] != 'Silent') & (df['Variant_Type'] == "SNP")]
 
 # Select a subset random tumor samples for testing
 #selected_samples = df['Tumor_Sample_Barcode'].drop_duplicates().sample(n=250, random_state=42)
 #df = df[df['Tumor_Sample_Barcode'].isin(selected_samples)]
 
 # Count and plot the number of donors per cancer type
-donors_by_cancer_counts = df.groupby("Project_Code")["Donor_ID"].nunique()
-
+donors_by_cancer_counts = df.groupby("Project_Code")["Tumor_Sample_Barcode"].nunique()
 plt.figure(figsize=(12, 6))
 donors_by_cancer_counts.sort_values(ascending=False).plot(kind="bar")
 plt.xlabel("Cancer Type")
@@ -65,9 +76,26 @@ plt.grid(axis="y", linestyle="--", alpha=0.7)
 plt.savefig(os.path.join(result_dir, "donors_by_cancer_counts.png"), dpi=300, bbox_inches="tight")
 plt.show()
 
+# Count and plot the number of mutations per donor
+mutations_per_donor = df.groupby("Tumor_Sample_Barcode").size()
+plt.figure(figsize=(8, 5))
+plt.hist(mutations_per_donor, bins=50, color="royalblue", alpha=0.7)
+plt.xlabel("Number of Mutations per Donor")
+plt.ylabel("Frequency (log scale)")
+plt.title("Mutation Count Distribution Across Donors")
+plt.xticks([])
+plt.yscale("log")
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.savefig(os.path.join(result_dir, "mutations_per_donor.png"), dpi=300, bbox_inches="tight")
+plt.show()
+
 # Keep only one cancer type
-df = df[df["Project_Code"] == "Skin-Melanoma"]
+#df = df[df["Project_Code"] == "Skin-Melanoma"]
 
 # Save preprocessed file
 df.to_csv(output_file, sep="\t", index=False)
 print(f"Preprocessed data saved to {output_file}")
+
+# Create metadata file (mapping from donor_id to project_code)
+metadata_df = df[['Tumor_Sample_Barcode', 'Project_Code']].drop_duplicates()
+metadata_df.to_csv(os.path.join(result_dir, "metadata.csv"), index=False)

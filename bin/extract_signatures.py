@@ -13,7 +13,6 @@ if __name__ == "__main__":
   # Ensure output directory exists
   os.makedirs(output_dir, exist_ok=True)
 
-  #torch.set_default_tensor_type(torch.cuda.FloatTensor)
   print("PyTorch is using:", "GPU" if torch.cuda.is_available() else "CPU")
 
   # Run SigProfilerExtractor to find mutation signatures
@@ -26,7 +25,7 @@ if __name__ == "__main__":
     maximum_signatures=8,
     nmf_replicates=100,
     min_nmf_iterations=10000,
-    max_nmf_iterations=200000,
+    max_nmf_iterations=1000000,
     matrix_normalization="gmm",
     gpu=True,
     batch_size=10
